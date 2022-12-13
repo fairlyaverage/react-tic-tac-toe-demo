@@ -5,7 +5,9 @@ import './index.css';
 class Square extends React.Component {
   render() { // {this.props.value} shows the value passed by prop[erties] called value. Pretty self-explanatory, just passing {value} into <button /> tags
     return (
-      <button className="square">
+      <button className="square" onClick={
+        function() { console.log('click');
+      }}>
         {this.props.value}
       </button>
     );
@@ -25,7 +27,7 @@ class Board extends React.Component {
       <div>
         <div className="status">{status}</div>
         <div className="board-row">
-          {this.renderSquare(0)} {/*iasuhiasugh */}
+          {this.renderSquare(0)} {/* pass a number to renderSquare() defined in this class that returns a Square with a value set as the parameter, and the square class passes value in the button tags  so renderSquare(value) returns new Square */}
           {this.renderSquare(1)}
           {this.renderSquare(2)}
         </div>
