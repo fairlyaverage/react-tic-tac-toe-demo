@@ -57,6 +57,9 @@ class Board extends React.Component {
 
   handleClick(i) {
     const squares = this.state.squares.slice();
+    if (calculateWinner(squares) || squares[i]) {
+      return; // do nothing if this Square has already been clicked (!null) or winner exists
+    }
     squares[i] = this.state.xIsNext ? 'X' : 'O'; // ternary conditional assignment
     this.setState({
       squares: squares,
@@ -75,7 +78,13 @@ class Board extends React.Component {
   }
 
   render() {
-    const status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O'); // note: keep in mind xIsNext is a state, not just attribute, also is let better here?
+    const winner = calculateWinner(this.state.squares); // assign via function using state's squares array upon render() which returns the contents of the first element matching 3-in-a-line or null
+    let status;
+    if (winner) { // not null
+      status = 'Winner: ' + winner;
+    } else {
+      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O'); // moved inside conditional, ternary logic unchanged--no winner, note: keep in mind xIsNext is a state, not just attribute
+    }
 
     return (
       <div>
@@ -120,3 +129,35 @@ class Game extends React.Component {
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<Game />);
+
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],    // top horizontal
+    [3, 4, 5],    // middle horizontal
+    [6, 7, 8],    // bottom horizontal
+    [0, 3, 6],    // left vertical
+    [1, 4, 7],    // middle vertical
+    [2, 5, 8],    // right vertical
+    [0, 4, 8],    // diagonal
+    [2, 4, 6],    // other diagonal
+  ];
+  /* for reference
+  squares = [
+    0, 1, 2,
+    3, 4, 5,
+    6, 7, 8,
+  ]
+  */
+
+  for (let i=0; i<lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (
+      squares[a]                    // element in squares[a] is not null
+      && squares[a] === squares[b]  // element in [a] is STRICTLY EQUAL to [b]
+      && squares[a] === squares[c]  // element in [a] is STRICTLY EQUAL to [c]
+    ) {
+      return squares[a];            // element will be 'X' or 'O', and the above means 3-in-a-line
+    }
+  }
+  return null; // no 3-in-a-line, so no winner?
+}
