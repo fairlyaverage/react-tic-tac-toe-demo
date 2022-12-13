@@ -114,18 +114,19 @@ class Board extends React.Component {
 class Game extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {                    // state has two properties
-      history: [{                     // history (1/2 prop) will be an array of objects with each having a squares array (?)
+    this.state = {                    // state has three properties
+      history: [{                     // history (1/3 prop) will be an array of objects with each having a squares array (?)
         squares: Array(9).fill(null), // 'lifted up' from Board constructor
       }],
-      xIsNext: true,                  // xIsNext (2/2 prop)
+      stepNumber: 0,                  // stepNumber (2/3 prop) before xIsNext to test for evenness in jumpTo() (unnecessary?)
+      xIsNext: true,                  // xIsNext (3/3 prop)
     };
   }
 
   // moved from Board and modified to also concatenate new history entries
   handleClick(i) {
-    const history = this.state.history; // newly added, note: const probably best choice because immutability is desired
-    const current = history[history.length - 1]; // newly added
+    const history = this.state.history.slice(0, this.state.stepNumber + 1); // slice() in this range ensures new moves made after returning to previous state discard 'future' history
+    const current = history[history.length - 1]; // note: const for these because immutability is desired and functional
     const squares = current.squares.slice(); // [modified this.state. -> current.] to use slice() to create copies of squares array
     if (calculateWinner(squares) || squares[i]) {
       return; // do nothing if this Square has already been clicked (!null) or winner exists
@@ -135,14 +136,37 @@ class Game extends React.Component {
       history: history.concat([{ // note: concat() preferred because it doesn't mutate original array like push()
         squares: squares,
       }]),
+      stepNumber: history.length, // functionally increments stepNumber
       xIsNext: !this.state.xIsNext, // reassign boolean
+    });
+  }
+
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: (step % 2) === 0, // true if even
+      // setState() shallow merges so history is unchanged as it is not specified
     });
   }
 
   render() {
     /* "Lifting state" to Game requires render() to maintain additional data */
     const history = this.state.history;
-    const current = history[history.length - 1];
+    const current = history[this.state.stepNumber]; // modified from [history.length - 1] -> [this.state.stepNumber] to implement "time travel"
+
+    // map history to moves
+    const moves = history.map((step, move) => { // step is current history element value, move is current history element index
+      const desc = move ?
+        'Go to move #' + move :
+        'Go to game start';
+      return (
+        <li key={move}>
+          <button onClick={() => this.jumpTo(move)}>
+            {desc}
+          </button>
+        </li>
+      );
+    });
 
     // from Board.render()
     const winner = calculateWinner(current.squares); // [this.state.squares -> current.squares when lifted]
@@ -163,7 +187,7 @@ class Game extends React.Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{/* TODO */}</ol>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
