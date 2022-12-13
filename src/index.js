@@ -1,32 +1,42 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+// define Square as a function component instead--"components that only contain a render method and don't have their own state"
+// class Square extends React.Component {
+//   // constructor disabled because Square no longer keeps track of the game's state
+//   // constructor to initialize state
+//   // constructor(props) {
+//   //   super(props); // all react component classes w/ constructor: must call ```super(props);``` first
+//   //   this.state = {  // object where value: null
+//   //     value: null,
+//   //   };
+//   // }
 
-class Square extends React.Component {
-  // constructor disabled because Square no longer keeps track of the game's state
-  // constructor to initialize state
-  // constructor(props) {
-  //   super(props); // all react component classes w/ constructor: must call ```super(props);``` first
-  //   this.state = {  // object where value: null
-  //     value: null,
-  //   };
-  // }
-
-  render() { // {this.props.value} shows the value passed by prop[erties] called value. Pretty self-explanatory, just passing {value} into <button /> tags
-    return (
-      <button
-        className="square"
-        onClick={() => this.props.onClick()}
-      > {/* syntax equivalent onClick={function() { foobar }}
-            new line for readability
-            note: don't comment inside tag braces
-            """"""
-            was this.setState({value: 'X'}) -> now this.props.onClick(), see onClick prop passed by Board.renderSquare()
-        */}
-        {this.props.value} {/* was this.state.value, but now parent (Board) tracks each square's state which is passed down through props */}
-      </button>
-    );
-  }
+//   render() { // {this.props.value} shows the value passed by prop[erties] called value. Pretty self-explanatory, just passing {value} into <button /> tags
+//     return (
+//       <button
+//         className="square"
+//         onClick={() => this.props.onClick()}
+//       > {/* syntax equivalent onClick={function() { foobar }}
+//             new line for readability
+//             note: don't comment inside tag braces
+//             """"""
+//             was this.setState({value: 'X'}) -> now this.props.onClick(), see onClick prop passed by Board.renderSquare()
+//         */}
+//         {this.props.value} {/* was this.state.value, but now parent (Board) tracks each square's state which is passed down through props */}
+//       </button>
+//     );
+//   }
+// }
+function Square(props) { // note: no need for this keyword in function component
+  return (
+    <button
+      className="square"
+      onClick={props.onClick}
+    >
+      {props.value}
+    </button>
+  );
 }
 
 class Board extends React.Component {
@@ -34,6 +44,7 @@ class Board extends React.Component {
     super(props);
     this.state = {
       squares: Array(9).fill(null),
+      xIsNext: true,
     }; // note: "lifting state" into a parent to share info among children
     /* init such that
       squares = [
@@ -46,8 +57,11 @@ class Board extends React.Component {
 
   handleClick(i) {
     const squares = this.state.squares.slice();
-    squares[i] = 'X';
-    this.setState({squares: squares});
+    squares[i] = this.state.xIsNext ? 'X' : 'O'; // ternary conditional assignment
+    this.setState({
+      squares: squares,
+      xIsNext: !this.state.xIsNext, // reassign boolean
+    });
   }
 
   renderSquare(i) {
@@ -61,7 +75,7 @@ class Board extends React.Component {
   }
 
   render() {
-    const status = 'Next player: X';
+    const status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O'); // note: keep in mind xIsNext is a state, not just attribute, also is let better here?
 
     return (
       <div>
