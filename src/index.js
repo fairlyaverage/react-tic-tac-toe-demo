@@ -3,12 +3,24 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 
 class Square extends React.Component {
+  // constructor to initialize state
+  constructor(props) {
+    super(props); // all react component classes w/ constructor: must call ```super(props);``` first
+    this.state = {  // object where value: null
+      value: null,
+    };
+  }
+
   render() { // {this.props.value} shows the value passed by prop[erties] called value. Pretty self-explanatory, just passing {value} into <button /> tags
     return (
-      <button className="square" onClick={
-        function() { console.log('click');
-      }}>
-        {this.props.value}
+      <button
+        className="square"
+        onClick={() => this.setState({value: 'X'})}
+      > {/* syntax equivalent onClick={function() { foobar }}
+            new line for readability
+            note: don't comment inside tag braces
+        */}
+        {this.state.value} {/* display state */}
       </button>
     );
   }
