@@ -40,55 +40,57 @@ function Square(props) { // note: no need for this keyword in function component
 }
 
 class Board extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      squares: Array(9).fill(null),
-      xIsNext: true,
-    }; // note: "lifting state" into a parent to share info among children
-    /* init such that
-      squares = [
-        null, null, null,
-        null, null, null,
-        null, null, null,
-      ]
-      */
-  }
+  // "lift state up" to Game -> delete (disable) constructor
+  // constructor(props) {
+  //   super(props);
+  //   this.state = {
+  //     squares: Array(9).fill(null),
+  //     xIsNext: true,
+  //   }; // note: "lifting state" into a parent to share info among children
+  //   /* init such that
+  //     squares = [
+  //       null, null, null,
+  //       null, null, null,
+  //       null, null, null,
+  //     ]
+  //     */
+  // }
 
-  handleClick(i) {
-    const squares = this.state.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
-      return; // do nothing if this Square has already been clicked (!null) or winner exists
-    }
-    squares[i] = this.state.xIsNext ? 'X' : 'O'; // ternary conditional assignment
-    this.setState({
-      squares: squares,
-      xIsNext: !this.state.xIsNext, // reassign boolean
-    });
-  }
+  // moved to parent (Game)
+  // handleClick(i) {
+  //   const squares = this.state.squares.slice(); // use slice() to create copies of squares array
+  //   if (calculateWinner(squares) || squares[i]) {
+  //     return; // do nothing if this Square has already been clicked (!null) or winner exists
+  //   }
+  //   squares[i] = this.state.xIsNext ? 'X' : 'O'; // ternary conditional assignment
+  //   this.setState({
+  //     squares: squares,
+  //     xIsNext: !this.state.xIsNext, // reassign boolean
+  //   });
+  // }
 
   renderSquare(i) {
     return ( // pass the ith state in squares array 'down' (parent Board->child Square) to this Square's value
       <Square
-        value={this.state.squares[i]} // value (1/2) prop passed down from Board to Square
-        onClick={() => this.handleClick(i)} // onClick (2/2) prop, defines function called on click event
+        value={this.props.squares[i]} // value (1/2) prop passed down from Game to Board to Square
+        onClick={() => this.props.onClick(i)} // [this.handleClick() -> this.props.onClick()] (2/2) prop, defines function called on click event
       />
       // note: follow React props naming convention on[Event] and handle[Event], even though they could be nAmEdaNYtHiNG
     );
   }
 
   render() {
-    const winner = calculateWinner(this.state.squares); // assign via function using state's squares array upon render() which returns the contents of the first element matching 3-in-a-line or null
-    let status;
-    if (winner) { // not null
-      status = 'Winner: ' + winner;
-    } else {
-      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O'); // moved inside conditional, ternary logic unchanged--no winner, note: keep in mind xIsNext is a state, not just attribute
-    }
-
+    // winner, status now rendered by parent (Game) so Board only needs to return the board <div />
+    // const winner = calculateWinner(this.state.squares); // assign via function using state's squares array upon render() which returns the contents of the first element matching 3-in-a-line or null
+    // let status;
+    // if (winner) { // not null
+    //   status = 'Winner: ' + winner;
+    // } else {
+    //   status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O'); // moved inside conditional, ternary logic unchanged--no winner, note: keep in mind xIsNext is a state, not just attribute
+    // }
     return (
       <div>
-        <div className="status">{status}</div>
+        {/* <div className="status">{status}</div> now render()-ed by Game */}
         <div className="board-row">
           {this.renderSquare(0)} {/* pass a number to renderSquare() defined in this class that returns a Square with a value set as the parameter, and the square class passes value in the button tags  so renderSquare(value) returns new Square */}
           {this.renderSquare(1)}
@@ -110,14 +112,57 @@ class Board extends React.Component {
 }
 
 class Game extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {                    // state has two properties
+      history: [{                     // history (1/2 prop) will be an array of objects with each having a squares array (?)
+        squares: Array(9).fill(null), // 'lifted up' from Board constructor
+      }],
+      xIsNext: true,                  // xIsNext (2/2 prop)
+    };
+  }
+
+  // moved from Board and modified to also concatenate new history entries
+  handleClick(i) {
+    const history = this.state.history; // newly added, note: const probably best choice because immutability is desired
+    const current = history[history.length - 1]; // newly added
+    const squares = current.squares.slice(); // [modified this.state. -> current.] to use slice() to create copies of squares array
+    if (calculateWinner(squares) || squares[i]) {
+      return; // do nothing if this Square has already been clicked (!null) or winner exists
+    }
+    squares[i] = this.state.xIsNext ? 'X' : 'O'; // ternary conditional assignment
+    this.setState({
+      history: history.concat([{ // note: concat() preferred because it doesn't mutate original array like push()
+        squares: squares,
+      }]),
+      xIsNext: !this.state.xIsNext, // reassign boolean
+    });
+  }
+
   render() {
+    /* "Lifting state" to Game requires render() to maintain additional data */
+    const history = this.state.history;
+    const current = history[history.length - 1];
+
+    // from Board.render()
+    const winner = calculateWinner(current.squares); // [this.state.squares -> current.squares when lifted]
+    let status;
+    if (winner) { // not null
+      status = 'Winner: ' + winner;
+    } else {
+      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O'); // moved inside conditional, ternary logic unchanged--no winner, note: keep in mind xIsNext is a state, not just attribute
+    }
+
     return (
       <div className="game">
         <div className="game-board">
-          <Board />
+          <Board
+            squares={current.squares}             // props that Board was render()ing for Square moved here
+            onClick={(i) => this.handleClick(i)}  // see above
+          />
         </div>
         <div className="game-info">
-          <div>{/* status */}</div>
+          <div>{status}</div>
           <ol>{/* TODO */}</ol>
         </div>
       </div>
@@ -131,6 +176,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(<Game />);
 
 function calculateWinner(squares) {
+  /* returns null unless a player has tic-tac-toe'd */
   const lines = [
     [0, 1, 2],    // top horizontal
     [3, 4, 5],    // middle horizontal
